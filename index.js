@@ -42,13 +42,11 @@ app.get('/api/notes/:id', (req, res, next) => {
         .catch(error => next(error));
 });
 
-app.post('/api/notes', (req, res) => {
+app.post('/api/notes', (req, res, next) => {
     const body = req.body;
 
     if(!body.content) {
-        return res.status(400).json({
-            error: 'content missing'
-        });
+        return res.status(400).json({ error: 'content missing' });
     }
 
     const note = new Note({
@@ -59,7 +57,8 @@ app.post('/api/notes', (req, res) => {
 
     note.save().then(savedNote => {
         res.json(savedNote.toJSON());
-    });
+    })
+    .catch(error => next(error));
 
 });
 
@@ -98,8 +97,10 @@ const errorHandler = (error, req, res, next) => {
     console.error(error.message)
   
     if (error.name === 'CastError' && error.kind === 'ObjectId') {
-      return res.status(400).send({ error: 'malformatted id' })
-    } 
+        return res.status(400).send({ error: 'malformatted id' });
+    } else if (error.name === 'ValidationError') {
+        return res.status(400).json({ error: error.message });
+    }
   
     next(error)
 }
